@@ -1,11 +1,10 @@
 #app="all"
 from pelix.ipopo.constants import use_ipopo
-from ycappuccino.core.api import IActivityLogger
-from ycappuccino.storage.api import IUploadManager,  IStorage, IDefaultManager, ITrigger, IManager
-from ycappuccino.storage.bundles.managers import AbsManager
-from ycappuccino.core.decorator_app import App
-from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Property,  Invalidate, Provides, BindField, UnbindField, \
-    Instantiate
+from ycappuccino_core.api import IActivityLogger
+from ycappuccino_storage.api import IUploadManager,  IStorage, IDefaultManager, ITrigger
+from ycappuccino_storage.bundles.managers import AbsManager
+from ycappuccino_core.decorator_app import Layer
+from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate
 import base64, os
 import logging
 
@@ -17,9 +16,8 @@ _logger = logging.getLogger(__name__)
 @Requires("_storage",IStorage.name,optional=True)
 @Requires("_default_manager",IDefaultManager.name)
 @Requires('_list_trigger', ITrigger.name, aggregate=True, optional=True)
-@App(name="ycappuccino.storage")
 @Instantiate("Manager-upload")
-@App(name="ycappuccino.storage")
+@Layer(name="ycappuccino_storage")
 class UploadManager(AbsManager):
 
     def __init__(self):

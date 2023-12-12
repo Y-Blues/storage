@@ -1,9 +1,7 @@
-from ycappuccino.core.models.decorators import Item, Property
-from ycappuccino.core.models.utils import YDict
-from ycappuccino.core.models.decorators  import get_item_by_class, get_item
-from ycappuccino.core.decorator_app import App
+from ycappuccino_core.models.decorators import Item, Property
+from ycappuccino_core.models.utils import YDict
+from ycappuccino_core.models.decorators  import get_item_by_class, get_item
 
-@App(name="ycappuccino.rest-app")
 @Item(collection="models", name="models", plural="models", abstract=True)
 class Model(YDict):
     """ default bean that represent a models to manipulate / store in a database """

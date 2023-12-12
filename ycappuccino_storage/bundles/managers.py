@@ -1,19 +1,19 @@
 #app="all"
 from pelix.ipopo.constants import use_ipopo
-from ycappuccino.core.api import  IActivityLogger
-from ycappuccino.storage.api import IManager, IStorage, ITrigger, IDefaultManager, IOrganizationManager
-from ycappuccino.storage.models.model import Model
-from ycappuccino.core.models.decorators import get_sons_item, get_sons_item_id
-from ycappuccino.core.models.utils import Proxy
+from ycappuccino_core.api import  IActivityLogger
+from ycappuccino_storage.api import IManager, IStorage, ITrigger, IDefaultManager
+from ycappuccino_storage.models.model import Model
+from ycappuccino_core.models.decorators import get_sons_item, get_sons_item_id
+from ycappuccino_core.models.utils import Proxy
 import json
 import logging
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Property,  Invalidate, Provides, BindField, UnbindField, \
     Instantiate
-from ycappuccino.core.decorator_app import App
+from ycappuccino_core.decorator_app import Layer
 
-from ycappuccino.storage.api import IFilter
+from ycappuccino_storage.api import IFilter
 
-from ycappuccino.storage.api import IUploadManager
+from ycappuccino_storage.api import IUploadManager
 
 _logger = logging.getLogger(__name__)
 
@@ -39,8 +39,6 @@ class AbsManager(IManager):
         self._items[a_item["id"]] = a_item
         self._items_class[a_item["_class"]] = a_item
         self._items_plural[a_item["plural"]] = a_item
-
-
 
     def get_item_from_id_plural(self,a_item_plural):
         """ return list of item id"""
@@ -68,6 +66,7 @@ class AbsManager(IManager):
             ids.append(w_item["plural"])
         return ids
 
+
     def is_secureRead(self):
         """ return dict of secureRead name regarding item_id"""
         ids = {}
@@ -75,13 +74,13 @@ class AbsManager(IManager):
             ids[w_item["id"]] = w_item["secureRead"]
         return ids
 
+
     def is_secureWrite(self):
         """ return dict of secureRead name regarding item_id"""
         ids = {}
         for w_item in self._items.values():
             ids[w_item["id"]] = w_item["secureWrite"]
         return ids
-
 
     def _get_lookup_param(self, a_exp):
         w_result = {}
@@ -527,7 +526,7 @@ class AbsManager(IManager):
 @Property('_item_id', "item_id", "models",)
 @Requires('_default_manager', IDefaultManager.name)
 @Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
-@App(name="ycappuccino.storage")
+@Layer(name="ycappuccino_storage")
 class ProxyManager(IManager, Proxy):
 
     def __init__(self):
@@ -560,7 +559,7 @@ class ProxyManager(IManager, Proxy):
 @Property('_item_id', "item_id", "models",)
 @Requires('_upload_manager', IUploadManager.name)
 @Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
-@App(name="ycappuccino.storage")
+@Layer(name="ycappuccino_storage")
 class ProxyMediaManager(IManager, Proxy):
 
     def __init__(self):
@@ -597,7 +596,7 @@ class ProxyMediaManager(IManager, Proxy):
 @Requires('_list_trigger', ITrigger.name, aggregate=True, optional=True)
 @Requires('_filters', IFilter.name, aggregate=True, optional=True)
 @Instantiate("Manager-default")
-@App(name="ycappuccino.storage")
+@Layer(name="ycappuccino_storage")
 class DefaultManager(AbsManager):
 
     def __init__(self):

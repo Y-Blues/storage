@@ -1,13 +1,24 @@
 #app="all"
-from ycappuccino.core.api import CFQCN
+from ycappuccino_core.api import CFQCN
 
-class IBootStrap(object):
+class IRightSubject(object):
+    name = CFQCN.build("IRightSubject")
+
+    def get_token_subject(self, a_subsystem, a_tenant):
+        return {
+            'sub': a_subsystem,
+            "tid": a_tenant
+        }
+
+class IBootStrap(IRightSubject):
     """ Manage bootstrap interface. it allow to initialize for an item data or do a bootstrap operation"""
     name = CFQCN.build("IBootStrap")
 
     def __init__(self):
         """ abstract constructor """
-        pass
+        super().__init__()
+
+
 
     def bootstrap(self):
         """ method call while manage is initialized and finish to allow to bootstrap operation """

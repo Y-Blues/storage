@@ -1,0 +1,16 @@
+2023-08-15 17:10:35,046;INFO;MainThread;proxy.py;proxy;validate;(47);serverProxy validating
+2023-08-15 17:10:35,046;INFO;MainThread;proxy.py;proxy;validate;(49);serverProxy validated
+2023-08-15 17:38:37,912;INFO;MainThread;proxy.py;proxy;validate;(47);serverProxy validating
+2023-08-15 17:38:37,912;INFO;MainThread;proxy.py;proxy;validate;(49);serverProxy validated
+2023-08-17 15:10:40,096;INFO;MainThread;proxy.py;proxy;validate;(47);serverProxy validating
+2023-08-17 15:10:40,096;INFO;MainThread;proxy.py;proxy;validate;(49);serverProxy validated
+2023-11-23 15:57:36,768;INFO;MainThread;proxy.py;proxy;validate;(48);serverProxy validating
+2023-11-23 15:57:36,768;INFO;MainThread;proxy.py;proxy;validate;(50);serverProxy validated
+2023-11-23 16:00:24,867;INFO;MainThread;proxy.py;proxy;validate;(48);serverProxy validating
+2023-11-23 16:00:24,867;INFO;MainThread;proxy.py;proxy;validate;(50);serverProxy validated
+2023-11-23 16:00:59,177;INFO;MainThread;proxy.py;proxy;validate;(48);serverProxy validating
+2023-11-23 16:00:59,178;INFO;MainThread;proxy.py;proxy;validate;(50);serverProxy validated
+2023-11-23 16:01:10,626;INFO;MainThread;proxy.py;proxy;validate;(48);serverProxy validating
+2023-11-23 16:01:10,626;INFO;MainThread;proxy.py;proxy;validate;(50);serverProxy validated
+2023-11-23 16:01:42,249;INFO;MainThread;proxy.py;proxy;validate;(48);serverProxy validating
+2023-11-23 16:01:42,249;INFO;MainThread;proxy.py;proxy;validate;(50);serverProxy validated

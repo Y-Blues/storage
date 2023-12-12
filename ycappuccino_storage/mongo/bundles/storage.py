@@ -1,28 +1,28 @@
 #app="all"
-from ycappuccino.core.api import  IActivityLogger, YCappuccino, IConfiguration
-from ycappuccino.storage.api import IStorage
+from ycappuccino_core.api import  IActivityLogger, YCappuccino, IConfiguration
+from ycappuccino_storage.api import IStorage
 import logging
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate
 from pymongo import MongoClient
 import time
-from ycappuccino.core.executor_service import RunnableProcess
-from ycappuccino.core import executor_service
+from ycappuccino_core.executor_service import Callable
+from ycappuccino_core import executor_service
 
 from uuid import uuid4
 import json
-from ycappuccino.core.decorator_app import App
+from ycappuccino_core.decorator_app import Layer
 
 _logger = logging.getLogger(__name__)
 
 
-class ValidateStorageConnect(RunnableProcess):
+class ValidateStorageConnect(Callable):
     """ """
 
     def __init__(self, a_service):
         super(ValidateStorageConnect, self).__init__("validateStorageConnect")
         self._service = a_service
 
-    def process(self):
+    def run(self):
         self._service.validateConnect()
 
 
@@ -31,7 +31,7 @@ class ValidateStorageConnect(RunnableProcess):
 @Requires("_log", IActivityLogger.name, spec_filter="'(name=main)'")
 @Requires("_config", IConfiguration.name)
 @Instantiate("MongoStorage")
-@App(name='ycappuccino.stprage-mongo')
+@Layer(name="ycappuccino_storage")
 class MongoStorage(IStorage):
 
     def __init__(self):
@@ -51,8 +51,8 @@ class MongoStorage(IStorage):
         self._host = self._config.get("storage.mongo.db.host", "localhost")
         self._port = self._config.get("storage.mongo.db.port", 27017)
         self._username = self._config.get("storage.mongo.db.username", "client_pyscript_core")
-        self._password = self._config.get("storage.mongo.db.password", "ycappuccino")
-        self._db_name = self._config.get("storage.mongo.db.name", "ycappuccino")
+        self._password = self._config.get("storage.mongo.db.password", "ycappuccino_storage")
+        self._db_name = self._config.get("storage.mongo.db.name", "ycappuccino_storage")
 
     def aggregate(self, a_collection, a_pipeline):
         """ aggegate data regarding filter and pipeline """
@@ -175,7 +175,6 @@ class MongoStorage(IStorage):
             self._db = self._client[self._db_name]
             _threadExecutor = executor_service.new_executor("validateConnectionStorage")
             _callable = ValidateStorageConnect(self)
-            _callable.set_activate(True)
             _threadExecutor.submit(_callable);
 
 

@@ -1,14 +1,13 @@
 #app="all"
-from ycappuccino.core.api import  IActivityLogger, IConfiguration, YCappuccino,  IProxyManager
-from ycappuccino.storage.bundles.managers import AbsManager, ProxyManager
-from ycappuccino.storage.api import IItemManager,  IStorage,   IManager,  IDefaultManager, IUploadManager
+from ycappuccino_core.api import  IActivityLogger, IConfiguration, YCappuccino,  IProxyManager
+from ycappuccino_storage.bundles.managers import AbsManager
+from ycappuccino_storage.api import IItemManager,  IStorage,   IManager,  IDefaultManager, IUploadManager
 import logging
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Property, Provides, Instantiate, BindField, UnbindField
-from ycappuccino.core.decorator_app import App
+from ycappuccino_core.decorator_app import Layer
+from ycappuccino_core.models import decorators
+import ycappuccino_core.framework as framework
 
-import ycappuccino.core.framework as framework
-
-import ycappuccino.core.models.decorators
 
 _logger = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ _logger = logging.getLogger(__name__)
 @Requires("_default_manager", specification=IDefaultManager.name)
 @Requires("_upload_manager", specification=IUploadManager.name)
 @Instantiate("itemManager")
-@App(name="ycappuccino.storage")
+@Layer(name="ycappuccino_storage")
 class ItemManager(IItemManager, AbsManager):
 
     def __init__(self):
@@ -41,25 +40,28 @@ class ItemManager(IItemManager, AbsManager):
         self._default_manager = None
         self._context = None
 
-
-
-    def get_one(self, a_item_id,  a_id):
-        w_dicts = ycappuccino.core.models.decorators.get_map_items_emdpoint()
+    def get_one(self, a_item_id, a_id, a_params=None, a_subject=None):
+        """
+        """
+        w_dicts = decorators.get_map_items_emdpoint()
         if a_id in w_dicts:
             w_result = w_dicts[a_id]
         return w_result
 
-    def get_aggregate_one(self, a_item_id, a_id):
+    def get_aggregate_one(self, a_item_id, a_id, a_params=None, a_subject=None):
+        """
 
-        return self.get_one(a_item_id, a_id )
-    def get_many(self, a_item_id, a_params):
-        w_result = ycappuccino.core.models.decorators.get_map_items_emdpoint()
+        """
+        return self.get_one(a_item_id, a_id, a_params, a_subject)
+
+    def get_many(self, a_item_id, a_params=None, a_subject=None):
+        w_result = decorators.get_map_items_emdpoint()
 
         return w_result
 
     def get_aggregate_many(self, a_item_id, a_params=None, a_subject=None):
 
-        return self.get_many(a_item_id,a_params )
+        return self.get_many(a_item_id,a_params, a_subject)
 
     def get_item_from_id_plural(self,a_item_plural):
         """ return list of item id"""
@@ -81,7 +83,7 @@ class ItemManager(IItemManager, AbsManager):
         self._context = a_service_reference._ServiceReference__bundle._Bundle__context
         self._default_manager = a_manager
         for w_item_id in a_manager.get_item_ids():
-            w_item = ycappuccino.core.models.decorators.get_item(w_item_id)
+            w_item = decorators.get_item(w_item_id)
             self._default_manager.add_item(w_item, self._context)
 
     @BindField("_upload_manager")
@@ -89,7 +91,7 @@ class ItemManager(IItemManager, AbsManager):
         self._context = a_service_reference._ServiceReference__bundle._Bundle__context
         self._upload_manager = a_manager
         for w_item_id in a_manager.get_item_ids():
-            w_item = ycappuccino.core.models.decorators.get_item(w_item_id)
+            w_item = decorators.get_item(w_item_id)
             if  w_item["multipart"]:
                 self._upload_manager.add_item(w_item, self._context)
 
@@ -110,8 +112,9 @@ class ItemManager(IItemManager, AbsManager):
 
     def load_item(self):
         """ """
-        for w_item in ycappuccino.core.models.decorators.get_map_items():
-            if "id" in w_item.keys() and  w_item["id"] not in self._map_managers  :
+
+        for w_item in decorators.get_map_items():
+            if "id" in w_item.keys() and  w_item["id"] not in self._map_managers:
                 # instanciate a component regarding the manager factory to use by item and default manage can be multi item
                 if not w_item["abstract"] and self._default_manager is not None:
                     self._log.info("add item {}".format(w_item["id"]))

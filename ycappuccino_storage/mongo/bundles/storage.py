@@ -1,6 +1,6 @@
 #app="all"
-from ycappuccino_core.api import  IActivityLogger, YCappuccino, IConfiguration
-from ycappuccino_storage.api import IStorage
+from ycappuccino_api.core.api import  IActivityLogger, YCappuccino, IConfiguration
+from ycappuccino_api.storage.api import IStorage
 import logging
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate
 from pymongo import MongoClient

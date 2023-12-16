@@ -1,7 +1,9 @@
-#app="all"
-from ycappuccino_core.api import  IActivityLogger, IConfiguration, YCappuccino,  IProxyManager
+"""
+component that manage model orm list
+"""
+from ycappuccino_api.core.api import  IActivityLogger, IConfiguration, YCappuccino
 from ycappuccino_storage.bundles.managers import AbsManager
-from ycappuccino_storage.api import IItemManager,  IStorage,   IManager,  IDefaultManager, IUploadManager
+from ycappuccino_api.storage.api import IItemManager,  IStorage,   IManager,  IDefaultManager, IUploadManager
 import logging
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Property, Provides, Instantiate, BindField, UnbindField
 from ycappuccino_core.decorator_app import Layer
@@ -21,7 +23,6 @@ _logger = logging.getLogger(__name__)
 @Requires("_config", IConfiguration.name)
 @Property('_is_secure', "secure", True)
 @Requires("_managers", specification=IManager.name, aggregate=True, optional=True)
-@Requires("_proxies", specification=IProxyManager.name, aggregate=True, optional=True)
 @Requires("_default_manager", specification=IDefaultManager.name)
 @Requires("_upload_manager", specification=IUploadManager.name)
 @Instantiate("itemManager")

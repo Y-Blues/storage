@@ -1,7 +1,10 @@
-#app="all"
+"""
+component that allow to upload media
+"""
+
 from pelix.ipopo.constants import use_ipopo
-from ycappuccino_core.api import IActivityLogger
-from ycappuccino_storage.api import IUploadManager,  IStorage, IDefaultManager, ITrigger
+from ycappuccino_api.core.api import IActivityLogger
+from ycappuccino_api.storage.api import IUploadManager,  IStorage, IDefaultManager, ITrigger
 from ycappuccino_storage.bundles.managers import AbsManager
 from ycappuccino_core.decorator_app import Layer
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate

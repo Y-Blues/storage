@@ -1,19 +1,20 @@
-#app="all"
+"""
+astract manager and component that represent a manager for an item (model)
+"""
 from pelix.ipopo.constants import use_ipopo
-from ycappuccino_core.api import  IActivityLogger
-from ycappuccino_storage.api import IManager, IStorage, ITrigger, IDefaultManager
+from ycappuccino_api.core.api import IActivityLogger
+from ycappuccino_api.proxy.api import Proxy
+
+from ycappuccino_api.storage.api import IManager, IStorage, ITrigger, IDefaultManager, IUploadManager
 from ycappuccino_storage.models.model import Model
 from ycappuccino_core.models.decorators import get_sons_item, get_sons_item_id
-from ycappuccino_core.models.utils import Proxy
 import json
 import logging
-from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Property,  Invalidate, Provides, BindField, UnbindField, \
-    Instantiate
+from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, BindField, UnbindField, \
+    Instantiate, Property
 from ycappuccino_core.decorator_app import Layer
 
-from ycappuccino_storage.api import IFilter
-
-from ycappuccino_storage.api import IUploadManager
+from ycappuccino_api.storage.api import IFilter
 
 _logger = logging.getLogger(__name__)
 
@@ -521,9 +522,77 @@ class AbsManager(IManager):
         return None
 
 
+
+
+
+
+@ComponentFactory('DefaultManager-Factory')
+@Provides(specifications=[IDefaultManager.name])
+@Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
+@Requires("_storage",IStorage.name,optional=True)
+@Requires('_list_trigger', ITrigger.name, aggregate=True, optional=True)
+@Requires('_filters', IFilter.name, aggregate=True, optional=True)
+@Instantiate("Manager-default")
+@Layer(name="ycappuccino_storage")
+class DefaultManager(AbsManager):
+
+    def __init__(self):
+        super(DefaultManager, self).__init__()
+        self._list_trigger = None
+        self._map_trigger = {}
+
+    def add_item(self, a_item, a_bundle_context):
+        """ add item in map manage by the manager"""
+        super(DefaultManager,self).add_item(a_item, a_bundle_context)
+        if not a_item["multipart"]:
+            self.create_proxy_manager(a_item, a_bundle_context)
+
+    def remove_item(self, a_item, a_bundle_context):
+        """ add item in map manage by the manager"""
+        super(DefaultManager,self).remove_item(a_item, a_bundle_context)
+        if not a_item["multipart"]:
+            self.remove_proxy_manager(a_item, a_bundle_context)
+
+    def create_proxy_manager(self, a_item, a_bundle_context):
+
+        with use_ipopo(a_bundle_context) as ipopo:
+            # use the iPOPO core service with the "ipopo" variable
+            self._log.info("create proxy {}".format(a_item["id"]))
+            ipopo.instantiate("Manager-Proxy-Factory", "IManager-Proxy-{}".format(a_item["id"]),
+                                {
+                                  "proxy": self,
+                                  "item_id": a_item["id"]})
+
+            self._log.info("end create proxy {}".format(a_item["id"]))
+
+
+    def remove_proxy_manager(self, a_item, a_bundle_context):
+        if a_item["id"] in self._list_component:
+            with use_ipopo(a_bundle_context) as ipopo:
+                ipopo.kill(self._list_component[a_item["id"]].name)
+
+    @Validate
+    def validate(self, context):
+        self._log.info("Manager default validating")
+        try:
+            pass
+        except Exception as e:
+            self._log.error("Manager Error default".format(e))
+            self._log.exception(e)
+
+        self._log.info("Manager default validated")
+
+    @Invalidate
+    def invalidate(self, context):
+        self._log.info("Manager default invalidating")
+
+        self._log.info("Manager default invalidated")
+
+
+
 @ComponentFactory('Manager-Proxy-Factory')
 @Provides(specifications=IManager.name)
-@Property('_item_id', "item_id", "models",)
+@Property('_item_id', "item_id", "models")
 @Requires('_default_manager', IDefaultManager.name)
 @Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
 @Layer(name="ycappuccino_storage")
@@ -585,66 +654,3 @@ class ProxyMediaManager(IManager, Proxy):
         self._log.info("ProxyMediaManager  invalidating")
 
         self._log.info("ManProxyMediaManagerager  invalidated")
-
-
-
-
-@ComponentFactory('DefaultManager-Factory')
-@Provides(specifications=[IDefaultManager.name])
-@Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
-@Requires("_storage",IStorage.name,optional=True)
-@Requires('_list_trigger', ITrigger.name, aggregate=True, optional=True)
-@Requires('_filters', IFilter.name, aggregate=True, optional=True)
-@Instantiate("Manager-default")
-@Layer(name="ycappuccino_storage")
-class DefaultManager(AbsManager):
-
-    def __init__(self):
-        super(DefaultManager, self).__init__()
-        self._list_trigger = None
-        self._map_trigger = {}
-
-    def add_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
-        super(DefaultManager,self).add_item(a_item, a_bundle_context)
-        if not a_item["multipart"]:
-            self.create_proxy_manager(a_item, a_bundle_context)
-
-    def remove_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
-        super(DefaultManager,self).remove_item(a_item, a_bundle_context)
-        if not a_item["multipart"]:
-            self.remove_proxy_manager(a_item, a_bundle_context)
-
-    def create_proxy_manager(self, a_item, a_bundle_context):
-
-        with use_ipopo(a_bundle_context) as ipopo:
-            # use the iPOPO core service with the "ipopo" variable
-            self._log.info("create proxy {}".format(a_item["id"]))
-            ipopo.instantiate("Manager-Proxy-Factory", "Manager-Proxy-{}".format(a_item["id"]),
-                                  {"item_id": a_item["id"]})
-
-            self._log.info("end create proxy {}".format(a_item["id"]))
-
-
-    def remove_proxy_manager(self, a_item, a_bundle_context):
-        if a_item["id"] in self._list_component:
-            with use_ipopo(a_bundle_context) as ipopo:
-                ipopo.kill(self._list_component[a_item["id"]].name)
-
-    @Validate
-    def validate(self, context):
-        self._log.info("Manager default validating")
-        try:
-            pass
-        except Exception as e:
-            self._log.error("Manager Error default".format(e))
-            self._log.exception(e)
-
-        self._log.info("Manager default validated")
-
-    @Invalidate
-    def invalidate(self, context):
-        self._log.info("Manager default invalidating")
-
-        self._log.info("Manager default invalidated")

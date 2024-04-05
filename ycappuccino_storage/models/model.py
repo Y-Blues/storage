@@ -1,6 +1,21 @@
+import ycappuccino_storage
 from ycappuccino_core.models.decorators import Item, Property
 from ycappuccino_core.models.utils import YDict
 from ycappuccino_core.models.decorators  import get_item_by_class, get_item
+
+
+def create_item(a_item, w_model):
+    if "_class_obj" not in a_item.keys():
+        if w_model is None:
+            w_instance = Model()
+        else:
+            w_instance = Model(w_model)
+    else:
+        if w_model is None:
+            w_instance = a_item["_class_obj"]()
+        else:
+            w_instance = a_item["_class_obj"](w_model)
+    return w_instance
 
 @Item(collection="models", name="models", plural="models", abstract=True)
 class Model(YDict):
@@ -12,7 +27,6 @@ class Model(YDict):
         self._mongo_model = {}
 
     def on_read(self, a_aggregate):
-        w_item = get_item_by_class(self.__class__)
         for key in self._dict.keys():
             w_method = "";
             w_key_model = "";
@@ -28,7 +42,8 @@ class Model(YDict):
             elif isinstance(self._dict[key] ,dict) :
                 if "_item_id" in self._dict[key].keys():
                     w_subitem = get_item(self._dict[key]["_item_id"])
-                    w_instance_subitem = w_subitem["_class_obj"](self._dict[key])
+                    w_instance_subitem = ycappuccino_storage.models.model.create_item(w_subitem, self._dict[key])
+
                     w_instance_subitem.on_read(a_aggregate);
                     self._mongo_model[key] = w_instance_subitem._mongo_model
             elif isinstance(self._dict[key] ,list) :
@@ -37,7 +52,7 @@ class Model(YDict):
                     if isinstance(w_elem,dict):
                         if "_item_id" in w_elem.keys():
                             w_subitem = get_item(w_elem["_item_id"])
-                            w_instance_subitem = w_subitem["_class_obj"](w_elem)
+                            w_instance_subitem = ycappuccino_storage.models.model.create_item(w_subitem, w_elem)
                             w_instance_subitem.on_read(a_aggregate);
                             self._mongo_model[key].append(w_instance_subitem._mongo_model)
 

@@ -4,6 +4,7 @@ component that allow to upload media
 
 from pelix.ipopo.constants import use_ipopo
 from ycappuccino_api.core.api import IActivityLogger
+from ycappuccino_api.proxy.api import YCappuccinoRemote
 from ycappuccino_api.storage.api import IUploadManager,  IStorage, IDefaultManager, ITrigger
 from ycappuccino_storage.bundles.managers import AbsManager
 from ycappuccino_core.decorator_app import Layer
@@ -14,11 +15,11 @@ import logging
 _logger = logging.getLogger(__name__)
 
 @ComponentFactory('UploadManager-Factory')
-@Provides(specifications=[IUploadManager.name])
-@Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
-@Requires("_storage",IStorage.name,optional=True)
-@Requires("_default_manager",IDefaultManager.name)
-@Requires('_list_trigger', ITrigger.name, aggregate=True, optional=True)
+@Provides(specifications=[YCappuccinoRemote.__name__, IUploadManager.__name__])
+@Requires("_log",IActivityLogger.__name__, spec_filter="'(name=main)'")
+@Requires("_storage",IStorage.__name__,optional=True)
+@Requires("_default_manager",IDefaultManager.__name__)
+@Requires('_list_trigger', ITrigger.__name__, aggregate=True, optional=True)
 @Instantiate("Manager-upload")
 @Layer(name="ycappuccino_storage")
 class UploadManager(AbsManager):

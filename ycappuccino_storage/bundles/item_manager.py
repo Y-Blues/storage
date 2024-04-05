@@ -1,7 +1,8 @@
 """
 component that manage model orm list
 """
-from ycappuccino_api.core.api import  IActivityLogger, IConfiguration, YCappuccino
+from ycappuccino_api.core.api import  IActivityLogger, IConfiguration
+from ycappuccino_api.proxy.api import YCappuccinoRemote
 from ycappuccino_storage.bundles.managers import AbsManager
 from ycappuccino_api.storage.api import IItemManager,  IStorage,   IManager,  IDefaultManager, IUploadManager
 import logging
@@ -17,14 +18,14 @@ _logger = logging.getLogger(__name__)
 
 
 @ComponentFactory('ItemManager-Factory')
-@Provides(specifications=[IItemManager.name, YCappuccino.name])
-@Requires("_log", IActivityLogger.name, spec_filter="'(name=main)'")
-@Requires("_storage", IStorage.name, optional=True)
-@Requires("_config", IConfiguration.name)
+@Provides(specifications=[YCappuccinoRemote.__name__, IItemManager.__name__])
+@Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
+@Requires("_storage", IStorage.__name__, optional=True)
+@Requires("_config", IConfiguration.__name__)
 @Property('_is_secure', "secure", True)
-@Requires("_managers", specification=IManager.name, aggregate=True, optional=True)
-@Requires("_default_manager", specification=IDefaultManager.name)
-@Requires("_upload_manager", specification=IUploadManager.name)
+@Requires("_managers", specification=IManager.__name__, aggregate=True, optional=True)
+@Requires("_default_manager", specification=IDefaultManager.__name__)
+@Requires("_upload_manager", specification=IUploadManager.__name__)
 @Instantiate("itemManager")
 @Layer(name="ycappuccino_storage")
 class ItemManager(IItemManager, AbsManager):
@@ -110,21 +111,24 @@ class ItemManager(IItemManager, AbsManager):
         for w_item_id in a_manager.get_item_ids():
             self._map_managers[w_item_id] = None
 
-
-    def load_item(self):
+    def load_items(self):
         """ """
-
+        """ load all item readed by framework item to be manage and add to link manager to be manage"""
         for w_item in decorators.get_map_items():
-            if "id" in w_item.keys() and  w_item["id"] not in self._map_managers:
-                # instanciate a component regarding the manager factory to use by item and default manage can be multi item
-                if not w_item["abstract"] and self._default_manager is not None:
-                    self._log.info("add item {}".format(w_item["id"]))
-                    self._default_manager.add_item(w_item, self._context)
-                    if w_item["multipart"] and self._upload_manager is not None:
-                        self._upload_manager.add_item(w_item, self._context)
+            self.load_item(w_item)
 
-            else:
-                print("error")
+    def load_item(self, a_item):
+        """ load item to be manage and add to link manager to be manage"""
+        if "id" in a_item.keys() and a_item["id"] not in self._map_managers:
+            # instanciate a component regarding the manager factory to use by item and default manage can be multi item
+            if not a_item["abstract"] and self._default_manager is not None:
+                self._log.info("add item {}".format(a_item["id"]))
+                self._default_manager.add_item(a_item, self._context)
+                if a_item["multipart"] and self._upload_manager is not None:
+                    self._upload_manager.add_item(a_item, self._context)
+
+        else:
+            print("error")
 
     @Validate
     def validate(self, context):

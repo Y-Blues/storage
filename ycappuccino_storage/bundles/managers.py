@@ -1,17 +1,35 @@
 """
 astract manager and component that represent a manager for an item (model)
 """
-from pelix.ipopo.constants import use_ipopo
-from ycappuccino_api.core.api import IActivityLogger
-from ycappuccino_api.proxy.api import Proxy
 
-from ycappuccino_api.storage.api import IManager, IStorage, ITrigger, IDefaultManager, IUploadManager
+from pelix.ipopo.constants import use_ipopo
+
+import ycappuccino_storage
+from ycappuccino_api.core.api import IActivityLogger
+from ycappuccino_api.proxy.api import Proxy, YCappuccinoRemote
+
+from ycappuccino_api.storage.api import (
+    IManager,
+    IStorage,
+    ITrigger,
+    IDefaultManager,
+    IUploadManager,
+)
 from ycappuccino_storage.models.model import Model
 from ycappuccino_core.models.decorators import get_sons_item, get_sons_item_id
 import json
 import logging
-from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, BindField, UnbindField, \
-    Instantiate, Property
+from pelix.ipopo.decorators import (
+    ComponentFactory,
+    Requires,
+    Validate,
+    Invalidate,
+    Provides,
+    BindField,
+    UnbindField,
+    Instantiate,
+    Property,
+)
 from ycappuccino_core.decorator_app import Layer
 
 from ycappuccino_api.storage.api import IFilter
@@ -22,7 +40,7 @@ _logger = logging.getLogger(__name__)
 class AbsManager(IManager):
 
     def __init__(self):
-        super(IManager, self).__init__();
+        super(IManager, self).__init__()
         self._log = None
         self._items = {}
         self._items_class = {}
@@ -36,17 +54,17 @@ class AbsManager(IManager):
         self._filters = None
 
     def add_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
+        """add item in map manage by the manager"""
         self._items[a_item["id"]] = a_item
         self._items_class[a_item["_class"]] = a_item
         self._items_plural[a_item["plural"]] = a_item
 
-    def get_item_from_id_plural(self,a_item_plural):
-        """ return list of item id"""
+    def get_item_from_id_plural(self, a_item_plural):
+        """return list of item id"""
         return self._items_plural[a_item_plural]
 
     def get_item_ids(self):
-        """ return list of item id"""
+        """return list of item id"""
 
         ids = []
         for w_item in self._items.values():
@@ -54,30 +72,28 @@ class AbsManager(IManager):
         return ids
 
     def get_map_item_ids_plural(self):
-        """ return dict of plural name regarding item_id"""
+        """return dict of plural name regarding item_id"""
         ids = {}
         for w_item in self._items.values():
-            ids[w_item["id"]]=w_item["plural"]
+            ids[w_item["id"]] = w_item["plural"]
         return ids
 
     def get_item_ids_plural(self):
-        """ return dict of plural name regarding item_id"""
+        """return dict of plural name regarding item_id"""
         ids = []
         for w_item in self._items.values():
             ids.append(w_item["plural"])
         return ids
 
-
     def is_secureRead(self):
-        """ return dict of secureRead name regarding item_id"""
+        """return dict of secureRead name regarding item_id"""
         ids = {}
         for w_item in self._items.values():
             ids[w_item["id"]] = w_item["secureRead"]
         return ids
 
-
     def is_secureWrite(self):
-        """ return dict of secureRead name regarding item_id"""
+        """return dict of secureRead name regarding item_id"""
         ids = {}
         for w_item in self._items.values():
             ids[w_item["id"]] = w_item["secureWrite"]
@@ -96,8 +112,10 @@ class AbsManager(IManager):
 
             w_item_target_id = w_exp
             if "(" in w_exp:
-                w_item_target_id = w_exp[0:w_exp.index("(")]
-                w_item_target_constraint = w_exp[w_exp.index("(") + 1:w_exp.index(")")]
+                w_item_target_id = w_exp[0 : w_exp.index("(")]
+                w_item_target_constraint = w_exp[
+                    w_exp.index("(") + 1 : w_exp.index(")")
+                ]
                 w_lookup_params_str = None
                 if "|" in w_item_target_constraint:
                     w_lookup_params_str = w_item_target_constraint.split("|")
@@ -113,87 +131,127 @@ class AbsManager(IManager):
                 w_prefix = None
                 for w_father in w_item_target_id_father.split("."):
                     w_result_current = w_result_current[w_father]
-                    w_lookup_as = w_result_current["params"]["as"] if "as" in w_result_current["params"].keys() else w_result_current["target"]+ "_doc"
-                    w_prefix = w_prefix+"."+w_lookup_as if w_prefix is not None else w_lookup_as
+                    w_lookup_as = (
+                        w_result_current["params"]["as"]
+                        if "as" in w_result_current["params"].keys()
+                        else w_result_current["target"] + "_doc"
+                    )
+                    w_prefix = (
+                        w_prefix + "." + w_lookup_as
+                        if w_prefix is not None
+                        else w_lookup_as
+                    )
                 w_result_current[w_key] = {
                     "target": w_item_target_id,
                     "params": w_lookup_params,
-                    "prefix": w_prefix
+                    "prefix": w_prefix,
                 }
             else:
                 w_result_current[w_key] = {
                     "target": w_item_target_id,
-                    "params": w_lookup_params
+                    "params": w_lookup_params,
                 }
-            w_item_target_id_father = w_item_target_id_father+"."+w_key if w_item_target_id_father is not None else w_key
+            w_item_target_id_father = (
+                w_item_target_id_father + "." + w_key
+                if w_item_target_id_father is not None
+                else w_key
+            )
 
         return w_result
 
     def _add_lookup_pipeline(self, a_pipeline, a_item, a_result_elem, a_subject=None):
         w_lookup_params = a_result_elem["params"]
         w_item_target_id = a_result_elem["target"]
-        w_prefix = a_result_elem["prefix"]+"." if "prefix" in a_result_elem else ""
+        w_prefix = a_result_elem["prefix"] + "." if "prefix" in a_result_elem else ""
 
         if "refs" in a_item.keys() and w_item_target_id in a_item["refs"]:
             w_doc = "_doc"
             if a_item["refs"][w_item_target_id]["reverse"]:
                 w_doc = "_docs"
             w_lookup_as = w_prefix + w_item_target_id + w_doc
-            w_lookup_as = w_prefix + w_lookup_params["as"] if "as" in w_lookup_params.keys() else w_lookup_as
+            w_lookup_as = (
+                w_prefix + w_lookup_params["as"]
+                if "as" in w_lookup_params.keys()
+                else w_lookup_as
+            )
 
             w_prop_lookup = a_item["refs"][w_item_target_id]
             w_item_target = self._items[w_item_target_id]
             # add lookup
-            a_pipeline["lookup"].append({
-                "$lookup": {
-                    "from": w_item_target["collection"],
-                    "let": {
-                        "localid": "$" + w_prefix + w_prop_lookup["local_field"]
-                    },
-                    "pipeline": [
-                        {
-                            "$match": {
-                                "$and": [
-                                    {
-                                        "$expr": {
-                                            "$eq": ["$" + w_prop_lookup["foreign_field"], "$$localid"]
-                                        }
-                                    },
-                                    json.loads(w_lookup_params["filter"]) if "filter" in w_lookup_params.keys() else {}
-                                ]
-                            }
-                        }, {
-                            "$skip": w_lookup_params["skip"] if "skip" in w_lookup_params.keys() else 0
+            a_pipeline["lookup"].append(
+                {
+                    "$lookup": {
+                        "from": w_item_target["collection"],
+                        "let": {
+                            "localid": "$" + w_prefix + w_prop_lookup["local_field"]
                         },
-                        {
-                            "$limit": w_lookup_params["limit"] if "limit" in w_lookup_params.keys() else 50
-                        }
-                    ],
-                    "as": w_lookup_as
+                        "pipeline": [
+                            {
+                                "$match": {
+                                    "$and": [
+                                        {
+                                            "$expr": {
+                                                "$eq": [
+                                                    "$"
+                                                    + w_prop_lookup["foreign_field"],
+                                                    "$$localid",
+                                                ]
+                                            }
+                                        },
+                                        (
+                                            json.loads(w_lookup_params["filter"])
+                                            if "filter" in w_lookup_params.keys()
+                                            else {}
+                                        ),
+                                    ]
+                                }
+                            },
+                            {
+                                "$skip": (
+                                    w_lookup_params["skip"]
+                                    if "skip" in w_lookup_params.keys()
+                                    else 0
+                                )
+                            },
+                            {
+                                "$limit": (
+                                    w_lookup_params["limit"]
+                                    if "limit" in w_lookup_params.keys()
+                                    else 50
+                                )
+                            },
+                        ],
+                        "as": w_lookup_as,
+                    }
                 }
-            })
+            )
             # add undind
             if not a_item["refs"][w_item_target_id]["reverse"]:
-                a_pipeline["lookup"].append({
-                    "$unwind": {
-                        "path": "$" + w_lookup_as,
-                        "preserveNullAndEmptyArrays": True
+                a_pipeline["lookup"].append(
+                    {
+                        "$unwind": {
+                            "path": "$" + w_lookup_as,
+                            "preserveNullAndEmptyArrays": True,
+                        }
                     }
-                })
+                )
             for w_elem_key_son in a_result_elem.keys():
-                if w_elem_key_son != "params" and w_elem_key_son != "target" and w_elem_key_son != "prefix":
+                if (
+                    w_elem_key_son != "params"
+                    and w_elem_key_son != "target"
+                    and w_elem_key_son != "prefix"
+                ):
                     # get item
-                    self._add_lookup_pipeline(a_pipeline, w_item_target, a_result_elem[w_elem_key_son])
+                    self._add_lookup_pipeline(
+                        a_pipeline, w_item_target, a_result_elem[w_elem_key_son]
+                    )
 
-    def _generate_pipeline(self, a_item ,a_filter, a_expand, a_select=None, a_subject=None):
+    def _generate_pipeline(
+        self, a_item, a_filter, a_expand, a_select=None, a_subject=None
+    ):
         w_pipeline = None
         w_expand_split = a_expand.split(",")
-        w_pipeline = {
-            "filter": {},
-            "lookup": [],
-            "group": [],
-            "project": []
-        }
+        w_pipeline = {"filter": {}, "lookup": [], "group": [], "project": []}
         for w_exp in w_expand_split:
             w_result = self._get_lookup_param(w_exp)
             for w_result_elem in w_result.keys():
@@ -223,17 +281,14 @@ class AbsManager(IManager):
             w_item = self._items[a_item_id]
             if w_item is not None:
                 w_items = self.get_sons_item_id(w_item)
-                w_filter = {
-                    "_id": a_id,
-                    "_item_id":{
-                        "$in":w_items
-                    }
-                }
+                w_filter = {"_id": a_id, "_item_id": {"$in": w_items}}
                 if a_subject is not None:
-                    self._manage_filter(w_filter, a_subject["tid"] )
+                    self._manage_filter(w_filter, a_subject["tid"])
 
                 res = self._storage.get_one(w_item["collection"], w_filter)
-                w_result = self._manage_return_result_from_one_instance(w_item, res, a_params)
+                w_result = self._manage_return_result_from_one_instance(
+                    w_item, res, a_params
+                )
                 self._call_trigger_post("read", w_result)
 
         return w_result
@@ -245,28 +300,28 @@ class AbsManager(IManager):
             if w_item is not None:
                 w_items = self.get_sons_item_id(w_item)
 
-
                 if a_params is not None and "expand" in a_params:
                     w_expand = a_params["expand"]
-                    w_filter = a_params["filter"] if  a_params.keys() else {}
-                    w_filter["_id"] = a_id,
-                    w_filter["_item_id"] = {
-                        "$in": w_items
-                    }
+                    w_filter = a_params["filter"] if a_params.keys() else {}
+                    w_filter["_id"] = (a_id,)
+                    w_filter["_item_id"] = {"$in": w_items}
 
                     self._manage_filter(w_filter, a_subject["tid"])
                     w_pipeline = self._generate_pipeline(w_item, w_filter, w_expand)
                     if w_pipeline is not None:
                         res = self._storage.aggregate(w_item["collection"], w_pipeline)
-                        return self._manage_return_result_from_one_instance(w_item, res,a_params)
+                        return self._manage_return_result_from_one_instance(
+                            w_item, res, a_params
+                        )
 
                 w_result = self.get_one(a_item_id, a_id, a_params)
                 self._call_trigger_post("read", w_result)
 
         return w_result
 
-
-    def _manage_return_result_from_one_instance(self, a_item,  res, a_params, a_aggregate=False):
+    def _manage_return_result_from_one_instance(
+        self, a_item, res, a_params, a_aggregate=False
+    ):
         w_result = None
         if res is not None:
             w_private_field = False
@@ -280,12 +335,16 @@ class AbsManager(IManager):
                     for w_priv_prop in a_item["private_property"]:
                         if w_priv_prop in w_model:
                             del w_model[w_priv_prop]
-                w_instance = a_item["_class_obj"](w_model)
+                w_instance = ycappuccino_storage.models.model.create_item(
+                    a_item, w_model
+                )
                 w_instance.on_read(a_aggregate)
                 w_result = w_instance
         return w_result
 
-    def _manage_return_result_from_many_instance(self, a_item, res, a_params, a_aggregate=False):
+    def _manage_return_result_from_many_instance(
+        self, a_item, res, a_params, a_aggregate=False
+    ):
         w_result = []
         if res is not None:
             w_private_field = False
@@ -302,7 +361,9 @@ class AbsManager(IManager):
                     for w_priv_prop in a_item["private_property"]:
                         if w_priv_prop in w_model:
                             del w_model[w_priv_prop]
-                w_instance = a_item["_class_obj"](w_model)
+                w_instance = ycappuccino_storage.models.model.create_item(
+                    a_item, w_model
+                )
                 w_instance.on_read(a_aggregate)
                 w_result.append(w_instance)
         return w_result
@@ -343,14 +404,16 @@ class AbsManager(IManager):
 
                 w_items = self.get_sons_item_id(w_item)
 
-                w_filter["_item_id"] = {
-                    "$in":w_items
-                }
+                w_filter["_item_id"] = {"$in": w_items}
                 if a_subject is not None:
-                    self._manage_filter(w_filter, a_subject["tid"] )
+                    self._manage_filter(w_filter, a_subject["tid"])
 
-                res = self._storage.get_many(w_item["collection"], w_filter, w_offset, w_limit, w_sort)
-                w_result = self._manage_return_result_from_many_instance(w_item, res,a_params)
+                res = self._storage.get_many(
+                    w_item["collection"], w_filter, w_offset, w_limit, w_sort
+                )
+                w_result = self._manage_return_result_from_many_instance(
+                    w_item, res, a_params
+                )
                 self._call_trigger_post("read", w_result)
 
         return w_result
@@ -377,42 +440,40 @@ class AbsManager(IManager):
 
                 w_items = self.get_sons_item_id(w_item)
 
-
                 if a_params is not None and "expand" in a_params:
                     w_expand = a_params["expand"]
                     w_filter = a_params["filter"] if "filter" in a_params.keys() else {}
-                    w_filter["_item_id"] = {
-                        "$in": w_items
-                    }
+                    w_filter["_item_id"] = {"$in": w_items}
                     self._manage_filter(w_filter, a_subject["tid"])
 
                     w_pipeline = self._generate_pipeline(w_item, w_filter, w_expand)
                     if w_pipeline is not None:
                         res = self._storage.aggregate(w_item["collection"], w_pipeline)
-                        w_result = self._manage_return_result_from_many_instance(w_item, res, a_params, True)
+                        w_result = self._manage_return_result_from_many_instance(
+                            w_item, res, a_params, True
+                        )
                         self._call_trigger_post("read", w_result)
                         return w_result
 
                 w_result = self.get_many(a_item_id, a_params, a_subject)
                 self._call_trigger_post("read", w_result)
 
-
         return w_result
 
     def up_sert(self, a_item_id, a_id, a_new_field, a_subject=None):
-        """ update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create """
+        """update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create"""
 
         if self._storage is not None:
             w_item = self._items[a_item_id]
 
             if w_item is not None:
-                model = w_item["_class_obj"]()
+                model = ycappuccino_storage.models.model.create_item(w_item, None)
                 model.on_update()
                 for prop in a_new_field:
                     if prop[0] == "_":
-                        getattr(model,prop[1:])(a_new_field[prop])
+                        getattr(model, prop[1:])(a_new_field[prop])
                     else:
-                        getattr(model,prop)(a_new_field[prop])
+                        getattr(model, prop)(a_new_field[prop])
 
                 res = self._up_sert(w_item, a_id, model.__dict__, a_subject)
                 if res is not None:
@@ -421,7 +482,7 @@ class AbsManager(IManager):
 
     def _up_sert(self, a_item, a_id, a_new_field, a_subject=None):
         if a_subject is not None:
-            a_new_field["_mongo_model"]["_tid"] =  a_subject["tid"]
+            a_new_field["_mongo_model"]["_tid"] = a_subject["tid"]
             a_new_field["_mongo_model"]["_account"] = a_subject["sub"]
 
         self._call_trigger_pre("upsert", a_item["id"], a_new_field)
@@ -432,7 +493,7 @@ class AbsManager(IManager):
             return res
 
     def up_sert_model(self, a_id, a_model, a_subject=None):
-        """ update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create """
+        """update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create"""
 
         if self._storage is not None:
             w_item = self._items_class[a_model.__class__.__name__]
@@ -445,21 +506,21 @@ class AbsManager(IManager):
                     return res
         return None
 
-    def up_sert_many(self, a_item_id,a_new_fields, a_subject=None):
+    def up_sert_many(self, a_item_id, a_new_fields, a_subject=None):
         res = []
 
         for w_dict in a_new_fields:
-            w_res = self.up_sert(a_item_id, w_dict._id,w_dict, a_subject)
+            w_res = self.up_sert(a_item_id, w_dict._id, w_dict, a_subject)
 
             if w_res is not None:
                 res.append(w_res)
         return res
 
-    def up_sert_many_model(self,  a_new_models, a_subject=None):
+    def up_sert_many_model(self, a_new_models, a_subject=None):
         res = []
 
         for w_dict in a_new_models:
-            w_res = self.up_sert_model( w_dict._id, w_dict, a_subject)
+            w_res = self.up_sert_model(w_dict._id, w_dict, a_subject)
 
             if w_res is not None:
                 res.append(w_res)
@@ -470,7 +531,7 @@ class AbsManager(IManager):
             w_item = self._items[a_item_id]
 
             if w_item is not None:
-                read = self._storage.get_one(w_item["collection"], a_id)
+                read = self._storage.get_one(w_item["collection"], {"_id": a_id})
                 self._call_trigger_pre("upsert", a_item_id, read)
 
                 self._storage.delete(w_item["collection"], a_id)
@@ -500,6 +561,7 @@ class AbsManager(IManager):
             for w_service in self._map_triggers[a_action].values():
                 if not w_service.is_post() and w_service.get_item() == a_item_id:
                     w_service.execute(a_action, a_model)
+
     def _call_trigger_post(self, a_action, a_item_id, a_model=None):
         if a_action in self._map_triggers:
             for w_service in self._map_triggers[a_action].values():
@@ -522,16 +584,12 @@ class AbsManager(IManager):
         return None
 
 
-
-
-
-
-@ComponentFactory('DefaultManager-Factory')
-@Provides(specifications=[IDefaultManager.name])
-@Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
-@Requires("_storage",IStorage.name,optional=True)
-@Requires('_list_trigger', ITrigger.name, aggregate=True, optional=True)
-@Requires('_filters', IFilter.name, aggregate=True, optional=True)
+@ComponentFactory("DefaultManager-Factory")
+@Provides(specifications=[YCappuccinoRemote.__name__, IDefaultManager.__name__])
+@Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
+@Requires("_storage", IStorage.__name__, optional=True)
+@Requires("_list_trigger", ITrigger.__name__, aggregate=True, optional=True)
+@Requires("_filters", IFilter.__name__, aggregate=True, optional=True)
 @Instantiate("Manager-default")
 @Layer(name="ycappuccino_storage")
 class DefaultManager(AbsManager):
@@ -542,14 +600,14 @@ class DefaultManager(AbsManager):
         self._map_trigger = {}
 
     def add_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
-        super(DefaultManager,self).add_item(a_item, a_bundle_context)
+        """add item in map manage by the manager"""
+        super(DefaultManager, self).add_item(a_item, a_bundle_context)
         if not a_item["multipart"]:
             self.create_proxy_manager(a_item, a_bundle_context)
 
     def remove_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
-        super(DefaultManager,self).remove_item(a_item, a_bundle_context)
+        """add item in map manage by the manager"""
+        super(DefaultManager, self).remove_item(a_item, a_bundle_context)
         if not a_item["multipart"]:
             self.remove_proxy_manager(a_item, a_bundle_context)
 
@@ -558,13 +616,13 @@ class DefaultManager(AbsManager):
         with use_ipopo(a_bundle_context) as ipopo:
             # use the iPOPO core service with the "ipopo" variable
             self._log.info("create proxy {}".format(a_item["id"]))
-            ipopo.instantiate("Manager-Proxy-Factory", "IManager-Proxy-{}".format(a_item["id"]),
-                                {
-                                  "proxy": self,
-                                  "item_id": a_item["id"]})
+            ipopo.instantiate(
+                "Manager-Proxy-Factory",
+                "IManager-Proxy-{}".format(a_item["id"]),
+                {"item_id": a_item["id"]},
+            )
 
             self._log.info("end create proxy {}".format(a_item["id"]))
-
 
     def remove_proxy_manager(self, a_item, a_bundle_context):
         if a_item["id"] in self._list_component:
@@ -589,17 +647,18 @@ class DefaultManager(AbsManager):
         self._log.info("Manager default invalidated")
 
 
-
-@ComponentFactory('Manager-Proxy-Factory')
-@Provides(specifications=IManager.name)
-@Property('_item_id', "item_id", "models")
-@Requires('_default_manager', IDefaultManager.name)
-@Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
+@ComponentFactory("Manager-Proxy-Factory")
+@Provides(specifications=[YCappuccinoRemote.__name__, IManager.__name__])
+@Property("_item_id", "item_id", "models")
+@Requires("_default_manager", IDefaultManager.__name__)
+@Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
 @Layer(name="ycappuccino_storage")
 class ProxyManager(IManager, Proxy):
 
     def __init__(self):
-        super(ProxyManager, self).__init__()
+        super(IManager, self).__init__()
+        super(Proxy, self).__init__()
+
         self._item_id = None
         self._obj = None
         self._log = None
@@ -623,16 +682,21 @@ class ProxyManager(IManager, Proxy):
         self._log.info("ProxyManager default invalidated")
 
 
-@ComponentFactory('Manager-ProxyMedia-Factory')
-@Provides(specifications=IManager.name)
-@Property('_item_id', "item_id", "models",)
-@Requires('_upload_manager', IUploadManager.name)
-@Requires("_log",IActivityLogger.name, spec_filter="'(name=main)'")
+@ComponentFactory("Manager-ProxyMedia-Factory")
+@Provides(specifications=IManager.__name__)
+@Property(
+    "_item_id",
+    "item_id",
+    "models",
+)
+@Requires("_upload_manager", IUploadManager.__name__)
+@Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
 @Layer(name="ycappuccino_storage")
 class ProxyMediaManager(IManager, Proxy):
 
     def __init__(self):
-        super(ProxyMediaManager, self).__init__()
+        super(IManager, self).__init__()
+        super(Proxy, self).__init__()
         self._item_id = None
         self._obj = None
         self._log = None

@@ -1,5 +1,8 @@
 #app="all"
-from ycappuccino_api.core.api import  IActivityLogger, YCappuccino, IConfiguration
+import ycappuccino_core
+import ycappuccino_storage
+from ycappuccino_api.core.api import  IActivityLogger,  IConfiguration
+from ycappuccino_api.proxy.api import YCappuccinoRemote
 from ycappuccino_api.storage.api import IStorage
 import logging
 from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate
@@ -11,6 +14,7 @@ from ycappuccino_core import executor_service
 from uuid import uuid4
 import json
 from ycappuccino_core.decorator_app import Layer
+from ycappuccino_storage.models.model import Model
 
 _logger = logging.getLogger(__name__)
 
@@ -26,11 +30,10 @@ class ValidateStorageConnect(Callable):
         self._service.validateConnect()
 
 
-@ComponentFactory('Storage-Factory')
-@Provides(specifications=[IStorage.name, YCappuccino.name], controller="_available")
-@Requires("_log", IActivityLogger.name, spec_filter="'(name=main)'")
-@Requires("_config", IConfiguration.name)
-@Instantiate("MongoStorage")
+@ComponentFactory('MongoStorage-Factory')
+@Provides(specifications=[YCappuccinoRemote.__name__, IStorage.__name__], controller="_available")
+@Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
+@Requires("_config", IConfiguration.__name__)
 @Layer(name="ycappuccino_storage")
 class MongoStorage(IStorage):
 
@@ -48,11 +51,12 @@ class MongoStorage(IStorage):
         self._available = False
 
     def load_configuration(self):
-        self._host = self._config.get("storage.mongo.db.host", "localhost")
-        self._port = self._config.get("storage.mongo.db.port", 27017)
-        self._username = self._config.get("storage.mongo.db.username", "client_pyscript_core")
-        self._password = self._config.get("storage.mongo.db.password", "ycappuccino_storage")
-        self._db_name = self._config.get("storage.mongo.db.name", "ycappuccino_storage")
+        prop_layer = ycappuccino_core.framework.get_layer_properties("ycappuccino_storage")
+        self._host = "host" in prop_layer.keys() if  prop_layer["host"] else None
+        self._port = "port" in prop_layer.keys() if  prop_layer["port"] else None
+        self._username = "username" in prop_layer.keys() if  prop_layer["username"] else None
+        self._password = "password" in prop_layer.keys() if  prop_layer["password"] else None
+        self._db_name = "db_name" in prop_layer.keys() if  prop_layer["db_name"] else None
 
     def aggregate(self, a_collection, a_pipeline):
         """ aggegate data regarding filter and pipeline """
@@ -91,7 +95,7 @@ class MongoStorage(IStorage):
         count = self._db[a_item["collection"]].count_documents(w_filter)
 
         if res != None and count != 0:
-            model = a_item["_class_obj"](res[0])
+            model = ycappuccino_storage.models.model.create_item(a_item, res[0])
             model._mongo_model = res[0]
 
             if "_mongo_model" in a_new_dict:
@@ -175,7 +179,7 @@ class MongoStorage(IStorage):
             self._db = self._client[self._db_name]
             _threadExecutor = executor_service.new_executor("validateConnectionStorage")
             _callable = ValidateStorageConnect(self)
-            _threadExecutor.submit(_callable);
+            _threadExecutor.submit(_callable)
 
 
         except Exception as e:

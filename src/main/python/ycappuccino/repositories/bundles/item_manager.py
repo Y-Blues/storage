@@ -25,7 +25,7 @@ from pelix.ipopo.decorators import (
     UnbindField,
 )
 from src.main.python.decorator_app import Layer
-from src.main.python.models import decorators
+from src.main.python import decorators
 import ycappuccino_core.framework as framework
 
 

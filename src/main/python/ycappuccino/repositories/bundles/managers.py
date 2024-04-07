@@ -15,7 +15,7 @@ from ycappuccino_api.storage.api import (
     IUploadManager,
 )
 from ycappuccino_storage import Model
-from src.main.python.models.decorators import get_sons_item, get_sons_item_id
+from ycappuccino.repositories.models import get_sons_item, get_sons_item_id
 import json
 import logging
 from pelix.ipopo.decorators import (

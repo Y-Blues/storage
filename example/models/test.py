@@ -1,6 +1,6 @@
-from src.main.python.models.decorators import Item, Property, Reference, Empty
+from ycappuccino.repositories import Item, Property, Reference, Empty
 from ycappuccino_storage import Model
-from src.main.python.decorator_app import App
+from src.main.python import App
 
 
 @Empty()

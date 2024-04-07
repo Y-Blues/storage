@@ -20,5 +20,5 @@ layers:
     port: 27017
     type: mongo
     db_name: remote_storage
-name: storage
+name: repositories
 bundle_prefix: ycappuccino

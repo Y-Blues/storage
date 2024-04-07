@@ -4,22 +4,35 @@ component that allow to upload media
 
 from pelix.ipopo.constants import use_ipopo
 from ycappuccino_api.core.api import IActivityLogger
-from ycappuccino_api.proxy.api import YCappuccinoRemote
-from ycappuccino_api.storage.api import IUploadManager,  IStorage, IDefaultManager, ITrigger
-from ycappuccino_storage.bundles.managers import AbsManager
-from ycappuccino_core.decorator_app import Layer
-from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate
+from src.main.python.proxy import YCappuccinoRemote
+from ycappuccino_api.storage.api import (
+    IUploadManager,
+    IStorage,
+    IDefaultManager,
+    ITrigger,
+)
+from ycappuccino_storage import AbsManager
+from src.main.python.decorator_app import Layer
+from pelix.ipopo.decorators import (
+    ComponentFactory,
+    Requires,
+    Validate,
+    Invalidate,
+    Provides,
+    Instantiate,
+)
 import base64, os
 import logging
 
 _logger = logging.getLogger(__name__)
 
-@ComponentFactory('UploadManager-Factory')
+
+@ComponentFactory("UploadManager-Factory")
 @Provides(specifications=[YCappuccinoRemote.__name__, IUploadManager.__name__])
-@Requires("_log",IActivityLogger.__name__, spec_filter="'(name=main)'")
-@Requires("_storage",IStorage.__name__,optional=True)
-@Requires("_default_manager",IDefaultManager.__name__)
-@Requires('_list_trigger', ITrigger.__name__, aggregate=True, optional=True)
+@Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
+@Requires("_storage", IStorage.__name__, optional=True)
+@Requires("_default_manager", IDefaultManager.__name__)
+@Requires("_list_trigger", ITrigger.__name__, aggregate=True, optional=True)
 @Instantiate("Manager-upload")
 @Layer(name="ycappuccino_storage")
 class UploadManager(AbsManager):
@@ -39,7 +52,9 @@ class UploadManager(AbsManager):
         return w_result
 
     def get_aggregate_one(self, a_item_id, a_id, a_params=None, a_subject=None):
-        w_result = self._default_manager.get_aggregate_one(a_item_id, a_id, a_params, a_subject)
+        w_result = self._default_manager.get_aggregate_one(
+            a_item_id, a_id, a_params, a_subject
+        )
 
         return w_result
 
@@ -49,13 +64,17 @@ class UploadManager(AbsManager):
         return w_result
 
     def get_aggregate_many(self, a_item_id, a_params=None, a_subject=None):
-        w_result = self._default_manager.get_aggregate_many(a_item_id, a_params, a_subject)
+        w_result = self._default_manager.get_aggregate_many(
+            a_item_id, a_params, a_subject
+        )
         return w_result
 
     def up_sert(self, a_item_id, a_id, a_new_field, a_subject=None):
-        """ update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create """
+        """update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create"""
         self._store_file(a_new_field)
-        w_result = self._default_manager.up_sert(a_item_id, a_id, a_new_field, a_subject)
+        w_result = self._default_manager.up_sert(
+            a_item_id, a_id, a_new_field, a_subject
+        )
 
         return w_result
 
@@ -70,47 +89,57 @@ class UploadManager(AbsManager):
             w_content = a_new_field["content"]
             del a_new_field["content"]
 
-        w_file_name_full = "{}/{}.{}".format(a_new_field["path"], a_new_field["file_name"], a_new_field["extension"])
-        with open(w_file_name_full,"w") as f:
+        w_file_name_full = "{}/{}.{}".format(
+            a_new_field["path"], a_new_field["file_name"], a_new_field["extension"]
+        )
+        with open(w_file_name_full, "w") as f:
             f.write(w_content)
+
     def _store_file_model(self, a_model):
         self._store_file(a_model)
+
     def _delete_file(self, a_item_id, a_id):
         # store file if we have all information that indicate the file name
         w_model = self._default_manager.get_one(a_item_id, a_id)
-        w_file_name_full = "{}/{}.{}".format(w_model["path"], w_model["file_name"], w_model["extension"])
+        w_file_name_full = "{}/{}.{}".format(
+            w_model["path"], w_model["file_name"], w_model["extension"]
+        )
         os.remove(w_file_name_full)
 
     def up_sert_model(self, a_id, a_model, a_subject=None):
-        """ update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create """
+        """update (insert if no exists) a collection with bson (a_new_field) for the id specify in parameter and return the models create"""
         self._store_file_model(a_model)
-        w_result = self._default_manager.up_sert_model( a_id, a_model, a_subject)
+        w_result = self._default_manager.up_sert_model(a_id, a_model, a_subject)
 
         return w_result
+
     def up_sert_many(self, a_item_id, a_new_fields, a_subject=None):
         for a_new_field in a_new_fields:
             self._store_file(a_new_field)
-        w_result = self._default_manager.up_sert_many( a_item_id, a_new_fields, a_subject)
+        w_result = self._default_manager.up_sert_many(
+            a_item_id, a_new_fields, a_subject
+        )
         return w_result
 
     def up_sert_many_model(self, a_new_models, a_subject=None):
         for a_model in a_new_models:
             self._store_file_model(a_model)
-        w_result = self._default_manager.up_sert_many_model( a_new_models, a_subject)
+        w_result = self._default_manager.up_sert_many_model(a_new_models, a_subject)
         return w_result
 
     def delete(self, a_item_id, a_id, a_subject=None):
         self._delete_file(a_item_id, a_id)
-        w_result = self._default_manager.delete( a_item_id, a_id , a_subject)
+        w_result = self._default_manager.delete(a_item_id, a_id, a_subject)
         return w_result
+
     def add_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
-        super(UploadManager,self).add_item(a_item, a_bundle_context)
+        """add item in map manage by the manager"""
+        super(UploadManager, self).add_item(a_item, a_bundle_context)
         self.create_proxy_manager(a_item, a_bundle_context)
 
     def remove_item(self, a_item, a_bundle_context):
-        """ add item in map manage by the manager"""
-        super(UploadManager,self).remove_item(a_item, a_bundle_context)
+        """add item in map manage by the manager"""
+        super(UploadManager, self).remove_item(a_item, a_bundle_context)
         self.remove_proxy_manager(a_item, a_bundle_context)
 
     def create_proxy_manager(self, a_item, a_bundle_context):
@@ -118,10 +147,12 @@ class UploadManager(AbsManager):
         with use_ipopo(a_bundle_context) as ipopo:
             # use the iPOPO core service with the "ipopo" variable
             self._log.info("create proxy {}".format(a_item["id"]))
-            ipopo.instantiate("Manager-ProxyMedia-Factory", "Manager-ProxyMedia-{}".format(a_item["id"]),
-                                  {"item_id": a_item["id"]})
+            ipopo.instantiate(
+                "Manager-ProxyMedia-Factory",
+                "Manager-ProxyMedia-{}".format(a_item["id"]),
+                {"item_id": a_item["id"]},
+            )
             self._log.info("end create proxy {}".format(a_item["id"]))
-
 
     def remove_proxy_manager(self, a_item, a_bundle_context):
         if a_item["id"] in self._list_component:
@@ -144,4 +175,3 @@ class UploadManager(AbsManager):
         self._log.info("Manager upload invalidating")
 
         self._log.info("Manager upload invalidated")
-

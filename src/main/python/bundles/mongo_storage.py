@@ -1,20 +1,23 @@
-#app="all"
-import ycappuccino_core
-import ycappuccino_storage
-from ycappuccino_api.core.api import  IActivityLogger,  IConfiguration
-from ycappuccino_api.proxy.api import YCappuccinoRemote
+# app="all"
+from ycappuccino_api.core.api import IActivityLogger, IConfiguration
+from src.main.python.proxy import YCappuccinoRemote
 from ycappuccino_api.storage.api import IStorage
 import logging
-from pelix.ipopo.decorators import ComponentFactory, Requires, Validate, Invalidate, Provides, Instantiate
+from pelix.ipopo.decorators import (
+    ComponentFactory,
+    Requires,
+    Validate,
+    Invalidate,
+    Provides,
+)
 from pymongo import MongoClient
 import time
-from ycappuccino_core.executor_service import Callable
-from ycappuccino_core import executor_service
+from ycappuccino_core import Callable
+from src.main.python import executor_service
 
 from uuid import uuid4
 import json
-from ycappuccino_core.decorator_app import Layer
-from ycappuccino_storage.models.model import Model
+from src.main.python.decorator_app import Layer
 
 _logger = logging.getLogger(__name__)
 
@@ -30,15 +33,18 @@ class ValidateStorageConnect(Callable):
         self._service.validateConnect()
 
 
-@ComponentFactory('MongoStorage-Factory')
-@Provides(specifications=[YCappuccinoRemote.__name__, IStorage.__name__], controller="_available")
+@ComponentFactory("MongoStorage-Factory")
+@Provides(
+    specifications=[YCappuccinoRemote.__name__, IStorage.__name__],
+    controller="_available",
+)
 @Requires("_log", IActivityLogger.__name__, spec_filter="'(name=main)'")
 @Requires("_config", IConfiguration.__name__)
 @Layer(name="ycappuccino_storage")
 class MongoStorage(IStorage):
 
     def __init__(self):
-        super(IStorage, self).__init__();
+        super(IStorage, self).__init__()
         self._log = None
         self._client = None
         self._db = None
@@ -51,30 +57,38 @@ class MongoStorage(IStorage):
         self._available = False
 
     def load_configuration(self):
-        prop_layer = ycappuccino_core.framework.get_layer_properties("ycappuccino_storage")
-        self._host = "host" in prop_layer.keys() if  prop_layer["host"] else None
-        self._port = "port" in prop_layer.keys() if  prop_layer["port"] else None
-        self._username = "username" in prop_layer.keys() if  prop_layer["username"] else None
-        self._password = "password" in prop_layer.keys() if  prop_layer["password"] else None
-        self._db_name = "db_name" in prop_layer.keys() if  prop_layer["db_name"] else None
+        prop_layer = ycappuccino_core.framework.get_layer_properties(
+            "ycappuccino_storage"
+        )
+        self._host = "host" in prop_layer.keys() if prop_layer["host"] else None
+        self._port = "port" in prop_layer.keys() if prop_layer["port"] else None
+        self._username = (
+            "username" in prop_layer.keys() if prop_layer["username"] else None
+        )
+        self._password = (
+            "password" in prop_layer.keys() if prop_layer["password"] else None
+        )
+        self._db_name = (
+            "db_name" in prop_layer.keys() if prop_layer["db_name"] else None
+        )
 
     def aggregate(self, a_collection, a_pipeline):
-        """ aggegate data regarding filter and pipeline """
+        """aggegate data regarding filter and pipeline"""
         return self._db[a_collection].aggregate(a_pipeline)
 
     def get_one(self, a_collection, a_filter, a_params=None):
-        """ get dict identify by a Id"""
+        """get dict identify by a Id"""
         return self._db[a_collection].find(a_filter)
 
     def get_many(self, a_collection, a_filter, a_offset, a_limit, a_sort):
-        """ return iterable of dict regarding filter"""
+        """return iterable of dict regarding filter"""
         w_offset = 0
         w_limit = 50
-        w_sort = {"_cat":-1}
+        w_sort = {"_cat": -1}
 
         if a_offset is not None:
             w_offset = a_offset
-        if a_limit is not  None:
+        if a_limit is not None:
             w_limit = a_limit
         if a_sort is not None:
             w_sort = json.loads(a_sort)
@@ -87,9 +101,9 @@ class MongoStorage(IStorage):
         return w_res
 
     def up_sert(self, a_item, a_id, a_new_dict):
-        """" update or insert new dict"""
+        """ " update or insert new dict"""
 
-        w_filter = {"_id": a_id, "_item_id":a_item["id"]}
+        w_filter = {"_id": a_id, "_item_id": a_item["id"]}
 
         res = self._db[a_item["collection"]].find(w_filter)
         count = self._db[a_item["collection"]].count_documents(w_filter)
@@ -102,21 +116,19 @@ class MongoStorage(IStorage):
                 a_new_dict["_mongo_model"]["_mat"] = time.time()
                 a_new_dict["_mongo_model"]["_item_id"] = a_item["id"]
 
-                w_update = {
-                    "$set": a_new_dict["_mongo_model"]
-                }
+                w_update = {"$set": a_new_dict["_mongo_model"]}
                 model.update(a_new_dict)
             else:
                 a_new_dict["_mat"] = time.time()
                 a_new_dict["_item_id"] = a_item["id"]
 
-                w_update = {
-                    "$set": a_new_dict
-                }
+                w_update = {"$set": a_new_dict}
                 model.update(a_new_dict)
             if "_id" in w_update["$set"].keys():
                 del w_update["$set"]["_id"]
-            return self._db[a_item["collection"]].update_one(w_filter, w_update, upsert=True)
+            return self._db[a_item["collection"]].update_one(
+                w_filter, w_update, upsert=True
+            )
         else:
             if "_mongo_model" in a_new_dict:
                 a_new_dict["_mongo_model"]["_cat"] = time.time()
@@ -139,23 +151,19 @@ class MongoStorage(IStorage):
             return self._db[a_item["collection"]].insert_one(w_update)
 
     def up_sert_many(self, a_collection, a_filter, a_new_dict):
-        """ update or insert document with new dict regarding filter """
+        """update or insert document with new dict regarding filter"""
         if "_mongo_model" not in a_new_dict:
             a_new_dict["_mongo_model"] = {}
         a_new_dict["_mongo_model"]["_mat"] = time.time()
         if "_mongo_model" in a_new_dict:
 
-            w_update = {
-                "$set": a_new_dict["_mongo_model"]
-            }
+            w_update = {"$set": a_new_dict["_mongo_model"]}
         else:
-            w_update = {
-                "$set": a_new_dict
-            }
+            w_update = {"$set": a_new_dict}
         return self._db[a_collection].update_many(a_filter, w_update, upsert=True)
 
     def delete(self, a_collection, a_id):
-        """ delete document identified by id if it exists """
+        """delete document identified by id if it exists"""
         w_filter = {"_id": a_id}
         self._db[a_collection].delete_one(w_filter, upsert=True)
 
@@ -180,7 +188,6 @@ class MongoStorage(IStorage):
             _threadExecutor = executor_service.new_executor("validateConnectionStorage")
             _callable = ValidateStorageConnect(self)
             _threadExecutor.submit(_callable)
-
 
         except Exception as e:
             self._log.error("MongoStorage Error {}".format(e))

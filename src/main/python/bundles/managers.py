@@ -4,9 +4,8 @@ astract manager and component that represent a manager for an item (model)
 
 from pelix.ipopo.constants import use_ipopo
 
-import ycappuccino_storage
 from ycappuccino_api.core.api import IActivityLogger
-from ycappuccino_api.proxy.api import Proxy, YCappuccinoRemote
+from src.main.python.proxy import Proxy, YCappuccinoRemote
 
 from ycappuccino_api.storage.api import (
     IManager,
@@ -15,8 +14,8 @@ from ycappuccino_api.storage.api import (
     IDefaultManager,
     IUploadManager,
 )
-from ycappuccino_storage.models.model import Model
-from ycappuccino_core.models.decorators import get_sons_item, get_sons_item_id
+from ycappuccino_storage import Model
+from src.main.python.models.decorators import get_sons_item, get_sons_item_id
 import json
 import logging
 from pelix.ipopo.decorators import (
@@ -30,7 +29,7 @@ from pelix.ipopo.decorators import (
     Instantiate,
     Property,
 )
-from ycappuccino_core.decorator_app import Layer
+from src.main.python.decorator_app import Layer
 
 from ycappuccino_api.storage.api import IFilter
 

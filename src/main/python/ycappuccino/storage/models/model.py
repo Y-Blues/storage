@@ -1,6 +1,6 @@
-from src.main.python.models.decorators import Item, Property
-from src.main.python.models.utils import YDict
-from src.main.python.models.decorators import get_item_by_class, get_item
+from ycappuccino.core.models.decorators import Item, Property
+from ycappuccino.core.models.utils import YDict
+from ycappuccino.core.models.decorators import get_item_by_class, get_item
 
 
 def create_item(a_item, w_model):

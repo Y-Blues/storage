@@ -1,7 +1,7 @@
 # app="all"
-from ycappuccino_api.core.api import IActivityLogger, IConfiguration
-from src.main.python.proxy import YCappuccinoRemote
-from ycappuccino_api.storage.api import IStorage
+from ycappuccino.api.core.api import IActivityLogger, IConfiguration
+from ycappuccino.api.proxy.api import YCappuccinoRemote
+from ycappuccino.api.storage.api import IStorage
 import logging
 from pelix.ipopo.decorators import (
     ComponentFactory,
@@ -12,12 +12,12 @@ from pelix.ipopo.decorators import (
 )
 from pymongo import MongoClient
 import time
-from ycappuccino_core import Callable
-from src.main.python import executor_service
+from ycappuccino.core import Callable
+from ycappuccino.core.executor_service import executor_service
 
 from uuid import uuid4
 import json
-from src.main.python.decorator_app import Layer
+from ycappuccino.core.decorator_app import Layer
 
 _logger = logging.getLogger(__name__)
 

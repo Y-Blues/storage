@@ -3,16 +3,15 @@ component that allow to upload media
 """
 
 from pelix.ipopo.constants import use_ipopo
-from ycappuccino_api.core.api import IActivityLogger
+from ycappuccino.api.core.api import IActivityLogger
 from src.main.python.proxy import YCappuccinoRemote
-from ycappuccino_api.storage.api import (
+from ycappuccino.api.storage.api import (
     IUploadManager,
     IStorage,
     IDefaultManager,
     ITrigger,
 )
-from ycappuccino_storage import AbsManager
-from src.main.python.decorator_app import Layer
+from ycappuccino.core.decorator_app import Layer
 from pelix.ipopo.decorators import (
     ComponentFactory,
     Requires,
@@ -23,6 +22,8 @@ from pelix.ipopo.decorators import (
 )
 import base64, os
 import logging
+
+from ycappuccino.storage.bundles.managers import AbsManager
 
 _logger = logging.getLogger(__name__)
 

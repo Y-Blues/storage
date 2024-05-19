@@ -2,10 +2,10 @@
 component that manage model orm list
 """
 
-from ycappuccino_api.core.api import IActivityLogger, IConfiguration
-from src.main.python.proxy import YCappuccinoRemote
-from ycappuccino_storage import AbsManager
-from ycappuccino_api.storage.api import (
+from ycappuccino.api.core.api import IActivityLogger, IConfiguration
+from ycappuccino.api.proxy.api import YCappuccinoRemote
+from ycappuccino.storage.bundles.managers import AbsManager
+from ycappuccino.api.storage.api import (
     IItemManager,
     IStorage,
     IManager,

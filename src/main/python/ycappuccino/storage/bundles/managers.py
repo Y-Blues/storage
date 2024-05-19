@@ -4,20 +4,26 @@ astract manager and component that represent a manager for an item (model)
 
 from pelix.ipopo.constants import use_ipopo
 
-from ycappuccino_api.core.api import IActivityLogger
-from src.main.python.proxy import Proxy, YCappuccinoRemote
+from ycappuccino.api.core.api import IActivityLogger
+from ycappuccino.api.proxy.api import Proxy, YCappuccinoRemote
 
-from ycappuccino_api.storage.api import (
+from ycappuccino.api.storage.api import (
     IManager,
     IStorage,
     ITrigger,
     IDefaultManager,
     IUploadManager,
 )
+<<<<<<<< HEAD:src/main/python/ycappuccino/repositories/bundles/managers.py
 from ycappuccino_storage import Model
 from ycappuccino.repositories.models import get_sons_item, get_sons_item_id
+========
+from ycappuccino.storage.models.model import Model
+from ycappuccino.core.models.decorators import get_sons_item, get_sons_item_id
+>>>>>>>> 95eae977081867994b57cfbb6b1dcd8a32f7f79b:src/main/python/ycappuccino/storage/bundles/managers.py
 import json
 import logging
+import ycappuccino.storage
 from pelix.ipopo.decorators import (
     ComponentFactory,
     Requires,
@@ -29,9 +35,9 @@ from pelix.ipopo.decorators import (
     Instantiate,
     Property,
 )
-from src.main.python.decorator_app import Layer
+from ycappuccino.core.decorator_app import Layer
 
-from ycappuccino_api.storage.api import IFilter
+from ycappuccino.api.storage.api import IFilter
 
 _logger = logging.getLogger(__name__)
 
@@ -334,7 +340,7 @@ class AbsManager(IManager):
                     for w_priv_prop in a_item["private_property"]:
                         if w_priv_prop in w_model:
                             del w_model[w_priv_prop]
-                w_instance = ycappuccino_storage.models.model.create_item(
+                w_instance = ycappuccino.storage.models.model.create_item(
                     a_item, w_model
                 )
                 w_instance.on_read(a_aggregate)
@@ -360,7 +366,7 @@ class AbsManager(IManager):
                     for w_priv_prop in a_item["private_property"]:
                         if w_priv_prop in w_model:
                             del w_model[w_priv_prop]
-                w_instance = ycappuccino_storage.models.model.create_item(
+                w_instance = ycappuccino.storage.models.model.create_item(
                     a_item, w_model
                 )
                 w_instance.on_read(a_aggregate)
@@ -466,7 +472,7 @@ class AbsManager(IManager):
             w_item = self._items[a_item_id]
 
             if w_item is not None:
-                model = ycappuccino_storage.models.model.create_item(w_item, None)
+                model = ycappuccino.storage.models.model.create_item(w_item, None)
                 model.on_update()
                 for prop in a_new_field:
                     if prop[0] == "_":
@@ -634,7 +640,7 @@ class DefaultManager(AbsManager):
         try:
             pass
         except Exception as e:
-            self._log.error("Manager Error default".format(e))
+            self._log.error(f"Manager Error defaul {e}")
             self._log.exception(e)
 
         self._log.info("Manager default validated")
@@ -669,7 +675,7 @@ class ProxyManager(IManager, Proxy):
             self._obj = self._default_manager
             self._obj._objname = "proxy-{}".format(self._item_id)
         except Exception as e:
-            self._log.error("ProxyManager Error default".format(e))
+            self._log.error(f"ProxyManager Error default {e}")
             self._log.exception(e)
 
         self._log.info("ProxyManager {} validated".format(self._item_id))
@@ -707,7 +713,7 @@ class ProxyMediaManager(IManager, Proxy):
             self._obj = self._upload_manager
             self._obj._objname = "proxy-{}".format(self._item_id)
         except Exception as e:
-            self._log.error("Manager Error default".format(e))
+            self._log.error(f"Manager Error default {e}")
             self._log.exception(e)
 
         self._log.info("ProxyMediaManager {} validated".format(self._item_id))

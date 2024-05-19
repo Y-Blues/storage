@@ -1,6 +1,12 @@
+<<<<<<<< HEAD:src/main/python/ycappuccino/repositories/models/model.py
 from ycappuccino.repositories.models import Item, Property
 from ycappuccino.repositories.models import YDict
 from ycappuccino.repositories.models import get_item_by_class, get_item
+========
+from ycappuccino.core.models.decorators import Item, Property
+from ycappuccino.core.models.utils import YDict
+from ycappuccino.core.models.decorators import get_item_by_class, get_item
+>>>>>>>> 95eae977081867994b57cfbb6b1dcd8a32f7f79b:src/main/python/ycappuccino/storage/models/model.py
 
 
 def create_item(a_item, w_model):

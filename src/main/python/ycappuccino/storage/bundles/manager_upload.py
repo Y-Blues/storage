@@ -3,9 +3,9 @@ component that allow to upload media
 """
 
 from pelix.ipopo.constants import use_ipopo
-from ycappuccino.api.core.api import IActivityLogger
-from src.main.python.proxy import YCappuccinoRemote
-from ycappuccino.api.storage.api import (
+from ycappuccino.api.core import IActivityLogger
+from ycappuccino.api.proxy import YCappuccinoRemote
+from ycappuccino.api.storage import (
     IUploadManager,
     IStorage,
     IDefaultManager,

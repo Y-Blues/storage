@@ -1,7 +1,8 @@
 # app="all"
-from ycappuccino.api.core.api import IActivityLogger, IConfiguration
-from ycappuccino.api.proxy.api import YCappuccinoRemote
-from ycappuccino.api.storage.api import IStorage
+from ycappuccino.api.core import IActivityLogger, IConfiguration
+from ycappuccino.api.models import create_item
+from ycappuccino.api.proxy import YCappuccinoRemote
+from ycappuccino.api.storage import IStorage
 import logging
 from pelix.ipopo.decorators import (
     ComponentFactory,
@@ -12,12 +13,16 @@ from pelix.ipopo.decorators import (
 )
 from pymongo import MongoClient
 import time
-from ycappuccino.core import Callable
-from ycappuccino.core.executor_service import executor_service
 
 from uuid import uuid4
 import json
 from ycappuccino.core.decorator_app import Layer
+
+from ycappuccino.core.executor_service import Callable
+
+from ycappuccino.core import executor_service
+
+from ycappuccino.core.framework import Framework
 
 _logger = logging.getLogger(__name__)
 
@@ -57,7 +62,7 @@ class MongoStorage(IStorage):
         self._available = False
 
     def load_configuration(self):
-        prop_layer = ycappuccino_core.framework.get_layer_properties(
+        prop_layer = Framework.get_instance().get_layer_properties(
             "ycappuccino_storage"
         )
         self._host = "host" in prop_layer.keys() if prop_layer["host"] else None
@@ -109,7 +114,7 @@ class MongoStorage(IStorage):
         count = self._db[a_item["collection"]].count_documents(w_filter)
 
         if res != None and count != 0:
-            model = ycappuccino_storage.models.model.create_item(a_item, res[0])
+            model = create_item(a_item, res[0])
             model._mongo_model = res[0]
 
             if "_mongo_model" in a_new_dict:

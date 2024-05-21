@@ -1,7 +1,7 @@
 # app="all"
 from pelix.ipopo.constants import use_ipopo
 
-from ycappuccino.api.core.api import IActivityLogger, IConfiguration
+from ycappuccino.api.core import IActivityLogger, IConfiguration
 import logging
 from pelix.ipopo.decorators import (
     ComponentFactory,
@@ -12,10 +12,11 @@ from pelix.ipopo.decorators import (
     Instantiate,
 )
 
-from ycappuccino.api.proxy.api import YCappuccinoRemote
-from ycappuccino.api.storage.api import IStorageFactory
+from ycappuccino.api.proxy import YCappuccinoRemote
+from ycappuccino.api.storage import IStorageFactory
 from ycappuccino.core.decorator_app import Layer
-import ycappuccino.core
+
+from ycappuccino.core.framework import Framework
 
 _logger = logging.getLogger(__name__)
 
@@ -38,7 +39,7 @@ class MongoStorageFactory(IStorageFactory):
     @Validate
     def validate(self, context):
         self._log.info("storageFactory validating")
-        prop_layer = ycappuccino.core.framework.get_layer_properties(
+        prop_layer = Framework.get_instance().get_layer_properties(
             "ycappuccino_storage"
         )
         if "type" in prop_layer.keys():

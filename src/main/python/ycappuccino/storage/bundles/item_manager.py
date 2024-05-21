@@ -2,10 +2,11 @@
 component that manage model orm list
 """
 
-from ycappuccino.api.core.api import IActivityLogger, IConfiguration
-from ycappuccino.api.proxy.api import YCappuccinoRemote
+from ycappuccino.api import decorators
+from ycappuccino.api.core import IActivityLogger, IConfiguration
+from ycappuccino.api.proxy import YCappuccinoRemote
 from ycappuccino.storage.bundles.managers import AbsManager
-from ycappuccino.api.storage.api import (
+from ycappuccino.api.storage import (
     IItemManager,
     IStorage,
     IManager,
@@ -24,10 +25,11 @@ from pelix.ipopo.decorators import (
     BindField,
     UnbindField,
 )
-from src.main.python.decorator_app import Layer
-from src.main.python import decorators
-import ycappuccino_core.framework as framework
 
+from ycappuccino.core.decorator_app import Layer
+
+
+from ycappuccino.core.framework import Framework
 
 _logger = logging.getLogger(__name__)
 
@@ -143,7 +145,7 @@ class ItemManager(IItemManager, AbsManager):
         self._log.info("Manager validating")
         try:
             self._context = context
-            framework.set_item_manager(self)
+            Framework.get_framework().set_item_manager(self)
         except Exception as e:
             self._log.error("Manager Error {}".format(e))
             self._log.exception(e)
